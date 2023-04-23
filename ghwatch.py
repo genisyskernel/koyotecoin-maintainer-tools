@@ -28,10 +28,10 @@ DEFAULT_CONFIG = {
     # the default setting will invoke the operating system default browser.
     'browser': None,
     # Alternatively, it is possible to specify a command
-    #'browser': ['firefox', '--new-tab'],
+    # 'browser': ['firefox', '--new-tab'],
 
     # Repository with github metadata mirror (to get label data)
-    'meta': {'bitcoin/bitcoin': '/path/to/bitcoin-gh-meta'},
+    'meta': {'koyotecoin/koyotecoin': '/path/to/koyotecoin-gh-meta'},
 
     # Interval in seconds for an automatic update (git pull) of github metadata mirror, if greater than 0.
     'auto_update': 0,
@@ -43,31 +43,31 @@ DEFAULT_CONFIG = {
     # When a PR or issue has multiple labels, the one with the highest priority will be
     # shown. This is pretty arbitary, roughly going from specific to aspecific,
     # and not a value judgement with regard to importance of components.
-    'label_prio': {'bitcoin/bitcoin': [
-      'Consensus',
-      'Mining',
-      'Mempool',
-      'TX fees and policy',
-      'UTXO Db and Indexes',
-      'Validation',
-      'P2P',
-      'Wallet',
-      'RPC/REST/ZMQ',
-      'Build system',
-      'Scripts and tools',
-      'Settings',
-      'Utils/log/libs',
-      'Tests',
-      'GUI',
-      'Docs',
-      'Descriptors',
-      'PSBT',
-      'Privacy',
-      'Resource usage',
-      'Block storage',
-      'Data corruption',
-      'Interfaces',
-      'Refactoring',
+    'label_prio': {'koyotecoin/koyotecoin': [
+        'Consensus',
+        'Mining',
+        'Mempool',
+        'TX fees and policy',
+        'UTXO Db and Indexes',
+        'Validation',
+        'P2P',
+        'Wallet',
+        'RPC/REST/ZMQ',
+        'Build system',
+        'Scripts and tools',
+        'Settings',
+        'Utils/log/libs',
+        'Tests',
+        'GUI',
+        'Docs',
+        'Descriptors',
+        'PSBT',
+        'Privacy',
+        'Resource usage',
+        'Block storage',
+        'Data corruption',
+        'Interfaces',
+        'Refactoring',
     ]},
 }
 
@@ -78,6 +78,7 @@ REASON_PRIO = ["assign", "review_requested", "mention", "author", "comment", "in
 # A clickable link UI element
 ButtonInfo = namedtuple('ButtonInfo', ['x0', 'y0', 'x1', 'y1', 'url'])
 
+
 class Theme:
     '''
     Application theming.
@@ -86,7 +87,7 @@ class Theme:
     HEADER = Attr.BOLD + Attr.REVERSE
     ROW = ''
     # Attribute for timestamp
-    DATETIME = '' # Attr.fg_hex('#ffffff')
+    DATETIME = ''  # Attr.fg_hex('#ffffff')
 
     # Attributes for PR/issue states
     REF = {
@@ -113,13 +114,14 @@ class Theme:
     }
     UNK_REASON = (ROW, '??')
 
+
 def pick_label(label_prio, repo, labels):
     '''
     Pick the most appropriate (highest priority) label to show.
     '''
     try:
         label_prio = label_prio[repo]
-    except KeyError: # if no specific prioritization for this repo, return the first label
+    except KeyError:  # if no specific prioritization for this repo, return the first label
         if len(labels) > 0:
             return labels[0]
         else:
@@ -139,22 +141,33 @@ def pick_label(label_prio, repo, labels):
 
     return res
 
+
 def parse_args() -> argparse.Namespace:
     '''Parse command line arguments.'''
-    parser = argparse.ArgumentParser(description='Display github notifications')
+    parser = argparse.ArgumentParser(
+        description='Display github notifications')
 
-    parser.add_argument('--exclude-reasons', '-x', help='Reasons to exclude (comma-separated) from: assign, author, comment, invitation, manual, mention, review_requested, security_alert, state_change, subscribed, team_mention)')
-    parser.add_argument('--all', '-a', action='store_const', const=True, default=False, help='Show all notifications, also those that are read')
-    parser.add_argument('--days', '-d', type=int, default=7, help='Number of days to look back (default: 7)')
-    parser.add_argument('--refresh-time', '-r', type=int, default=600, help='Refresh time in seconds in interactive mode (default: 600)')
-    parser.add_argument('--default-config', action='store_const', const=True, default=False, help='Generate a default configuration file in ~/.config/ghwatch')
-    parser.add_argument('--sort', '-s', action='store_true', default=None, help="Sort notifications by reasons (and then time). Overrides 'sort_notifications' in the configuration file")
-    parser.add_argument('--no-sort', dest='sort', action='store_false', help="Don't sort notifications. Overrides 'sort_notifications' in the configuration file")
+    parser.add_argument('--exclude-reasons', '-x',
+                        help='Reasons to exclude (comma-separated) from: assign, author, comment, invitation, manual, mention, review_requested, security_alert, state_change, subscribed, team_mention)')
+    parser.add_argument('--all', '-a', action='store_const', const=True,
+                        default=False, help='Show all notifications, also those that are read')
+    parser.add_argument('--days', '-d', type=int, default=7,
+                        help='Number of days to look back (default: 7)')
+    parser.add_argument('--refresh-time', '-r', type=int, default=600,
+                        help='Refresh time in seconds in interactive mode (default: 600)')
+    parser.add_argument('--default-config', action='store_const', const=True,
+                        default=False, help='Generate a default configuration file in ~/.config/ghwatch')
+    parser.add_argument('--sort', '-s', action='store_true', default=None,
+                        help="Sort notifications by reasons (and then time). Overrides 'sort_notifications' in the configuration file")
+    parser.add_argument('--no-sort', dest='sort', action='store_false',
+                        help="Don't sort notifications. Overrides 'sort_notifications' in the configuration file")
 
     return parser.parse_args()
 
+
 config_dir: str = f'{os.path.expanduser("~")}/.config/ghwatch'
 config_file: str = f'{config_dir}/ghwatch.conf'
+
 
 def parse_config_file(generate=False):
     config = DEFAULT_CONFIG
@@ -167,9 +180,11 @@ def parse_config_file(generate=False):
             # TODO: merge with default config instead of overwrite here
             config = json.load(f)
     else:
-        print(f'No configuration file {config_file}, use --default-config to generate a default one.', file=sys.stderr)
+        print(
+            f'No configuration file {config_file}, use --default-config to generate a default one.', file=sys.stderr)
         sys.exit(1)
     return config
+
 
 def get_html_url(ghbase, rec):
     '''
@@ -186,7 +201,8 @@ def get_html_url(ghbase, rec):
 
     comment_n = ''
     if rec.subject.latest_comment_url:
-        m = re.match('.*\/comments\/([0-9a-f]+)$', rec.subject.latest_comment_url)
+        m = re.match('.*\/comments\/([0-9a-f]+)$',
+                     rec.subject.latest_comment_url)
         if m:
             comment_n = '#issuecomment-' + m.group(1)
 
@@ -196,11 +212,13 @@ def get_html_url(ghbase, rec):
         return f'{ghbase}{rec.repository.full_name}/issues/{idx}{comment_n}'
     elif rec.subject.type == 'Commit':
         return f'{ghbase}{rec.repository.full_name}/commit/{idx}{comment_n}'
-    else: # TODO: releases and other things
+    else:  # TODO: releases and other things
         return None
+
 
 def priority_sort_key(item):
     return (-REASON_PRIO.index(item.reason), item.updated_at)
+
 
 def github_load(user):
     '''
@@ -214,6 +232,7 @@ def github_load(user):
         notifications.sort(key=priority_sort_key, reverse=True)
 
     return notifications
+
 
 def draw(notifications):
     sys.stdout.write(Attr.CLEAR)
@@ -252,18 +271,20 @@ def draw(notifications):
         else:
             # Release: https://api.github.com/repos/bitcoin-core/HWI/releases/34442950
             # RepositoryInvitation: ?
-            if rec.subject.type not in {'Release', 'RepositoryInvitation'}: # Huh
+            if rec.subject.type not in {'Release', 'RepositoryInvitation'}:  # Huh
                 print(rec.subject.type, rec.subject.url)
-                assert(False)
+                assert (False)
             issue = None
             meta = None
 
         label_t = (Theme.ROW, '')
         state = 'unknown'
         if meta is not None:
-            label = pick_label(config['label_prio'], rec.repository.full_name, meta['labels'])
+            label = pick_label(config['label_prio'],
+                               rec.repository.full_name, meta['labels'])
             if label is not None:
-                label_t = (Attr.bg_hex(label['color']) + Attr.fg(0, 0, 0), label['name'])
+                label_t = (Attr.bg_hex(
+                    label['color']) + Attr.fg(0, 0, 0), label['name'])
 
             state = meta['state']
             if meta['pr'] is not None and meta['pr']['merged']:
@@ -277,14 +298,14 @@ def draw(notifications):
             (Theme.REF.get(state, ''), ref_str),
             label_t,
             (Theme.ROW, rec.subject.title),
-            ])
+        ])
 
         buttons.append(ButtonInfo(
-            x0 = issue_column.x,
-            y0 = row + 1,
-            x1 = issue_column.x + issue_column.width,
-            y1 = row + 2,
-            url = get_html_url(config['ghbase'], rec),
+            x0=issue_column.x,
+            y0=row + 1,
+            x1=issue_column.x + issue_column.width,
+            y1=row + 2,
+            url=get_html_url(config['ghbase'], rec),
         ))
 
         row += 1
@@ -292,6 +313,7 @@ def draw(notifications):
             break
 
     return buttons
+
 
 def handle_mouse_click(b, config):
     '''
@@ -301,7 +323,9 @@ def handle_mouse_click(b, config):
         if config['browser'] is None:
             webbrowser.open(b.url)
         else:
-            subprocess.call(config['browser'] + [b.url], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            subprocess.call(config['browser'] + [b.url],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 
 def set_window_size():
     global pr, N
@@ -323,16 +347,19 @@ def set_window_size():
         Column('title', W),
     ])
 
+
 def pull_repositories(config):
     '''
     Use subprocess to "git pull" the configured metadata-repositories.
     '''
     try:
         for repo, repo_path in config['meta'].items():
-            subprocess.run(['git','pull'], check=True, cwd=repo_path, capture_output=True)
+            subprocess.run(['git', 'pull'], check=True,
+                           cwd=repo_path, capture_output=True)
     except subprocess.CalledProcessError as e:
         print(e.stderr.decode())
         raise
+
 
 def main():
     global args, config, exclude_reasons, ghmeta, sort_notifications
@@ -340,7 +367,8 @@ def main():
     args = parse_args()
     config = parse_config_file(args.default_config)
     if not config['ghtoken']:
-        print(f'A github token is required to be set as "ghtoken" in {config_file}', file=sys.stderr)
+        print(
+            f'A github token is required to be set as "ghtoken" in {config_file}', file=sys.stderr)
         exit(1)
     auto_update = config.get('auto_update', 0)
     ghmeta = GhMeta(config['meta'])
@@ -399,6 +427,7 @@ def main():
                 buttons = draw(notifications)
     finally:
         Key.stop()
+
 
 if __name__ == "__main__":
     main()

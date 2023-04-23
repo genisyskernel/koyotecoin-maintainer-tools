@@ -15,7 +15,9 @@ import treehash512
 GIT = os.getenv("GIT", "git")
 
 # Full version specification
-VersionSpec = collections.namedtuple('VersionSpec', ['major', 'minor', 'build', 'rc'])
+VersionSpec = collections.namedtuple(
+    'VersionSpec', ['major', 'minor', 'build', 'rc'])
+
 
 def version_name(spec):
     '''
@@ -28,6 +30,7 @@ def version_name(spec):
     if spec.rc:
         version += f"rc{spec.rc}"
     return version
+
 
 def parse_tag(tag):
     '''
@@ -51,7 +54,8 @@ def parse_tag(tag):
 
     # Check for x.y.z.0 or x.y.zrc0
     if build == '0' or rc == '0':
-        print('rc or build cannot be specified as 0 (leave them out instead)', file=sys.stderr)
+        print(
+            'rc or build cannot be specified as 0 (leave them out instead)', file=sys.stderr)
         sys.exit(1)
 
     # Implicitly, treat no rc as rc0 and no build as build 0
@@ -62,6 +66,7 @@ def parse_tag(tag):
 
     return VersionSpec(int(major), int(minor), int(build), int(rc))
 
+
 def check_configure_ac(spec):
     '''
     Parse configure.ac and return
@@ -71,7 +76,8 @@ def check_configure_ac(spec):
     filename = 'configure.ac'
     with open(filename) as f:
         for line in f:
-            m = re.match("define\(_CLIENT_VERSION_([A-Z_]+), ([0-9a-z]+)\)", line)
+            m = re.match(
+                "define\(_CLIENT_VERSION_([A-Z_]+), ([0-9a-z]+)\)", line)
             if m:
                 info[m.group(1)] = m.group(2)
     # check if IS_RELEASE is set
@@ -80,15 +86,16 @@ def check_configure_ac(spec):
         sys.exit(1)
 
     cfg_spec = VersionSpec(
-            int(info['MAJOR']),
-            int(info['MINOR']),
-            int(info['BUILD']),
-            int(info['RC']),
-        )
+        int(info['MAJOR']),
+        int(info['MINOR']),
+        int(info['BUILD']),
+        int(info['RC']),
+    )
 
     if cfg_spec != spec:
         print(f"{filename}: Version from tag {version_name(spec)} doesn't match specified version {version_name(cfg_spec)}", file=sys.stderr)
         sys.exit(1)
+
 
 def main():
     try:
@@ -106,7 +113,8 @@ def main():
 
     # Check if working directory clean
     if subprocess.call([GIT, 'diff-index', '--quiet', 'HEAD']):
-        print('Git working directory is not clean. Commit changes first.', file=sys.stderr)
+        print('Git working directory is not clean. Commit changes first.',
+              file=sys.stderr)
         sys.exit(1)
 
     # Check version components against configure.ac in git tree
@@ -121,7 +129,7 @@ def main():
         version += f" release candidate {spec.rc}"
     else:
         version += " final"
-    msg = 'Bitcoin Core ' + version + '\n'
+    msg = 'Koyotecoin Core ' + version + '\n'
 
     # Add treehash header
     msg += "\n"
@@ -130,6 +138,7 @@ def main():
     # Finally, make the tag
     print(msg)
     return subprocess.call([GIT, "tag", "-s", tag, "-m", msg])
+
 
 if __name__ == '__main__':
     sys.exit(main())

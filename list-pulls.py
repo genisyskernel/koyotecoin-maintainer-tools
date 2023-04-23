@@ -26,16 +26,17 @@ import subprocess
 import re
 import json
 import time
-import sys, os
+import sys
+import os
 from collections import namedtuple, defaultdict
 
 # == Global environment ==
 GIT = os.getenv('GIT', 'git')
-GHMETA = os.getenv('GHMETA', '../bitcoin-gh-meta')
-DEFAULT_REPO = os.getenv('DEFAULT_REPO', 'bitcoin/bitcoin')
+GHMETA = os.getenv('GHMETA', '../koyotecoin-gh-meta')
+DEFAULT_REPO = os.getenv('DEFAULT_REPO', 'koyotecoin/koyotecoin')
 
 # == Label to category mapping ==
-# See: https://github.com/bitcoin/bitcoin/labels
+# See: https://github.com/koyotecoin/koyotecoin/labels
 # this is priority ordering: the first label to be matched determines the
 # category it is slotted to
 # TODO: simply create titles for combinations of mappings, and leave it up to release note writer
@@ -84,12 +85,12 @@ LABEL_MAPPING = (
 UNCATEGORIZED = 'Uncategorized'
 
 # == PR title prefix to category mapping ==
-# this takes precedence over the above label mapping 
+# this takes precedence over the above label mapping
 # handle (in all cases, ignoring including leading and trailing ' ')
 # SPECIFY IN LOWERCASE
 # set do_strip as False if the prefix adds information beyond what the category provides!
 # '[prefix]:' '[prefix]' 'prefix:'
-PREFIXES = [ 
+PREFIXES = [
     # (prefix, category, do_strip)
     ('bench', 'Tests and QA', False),
     ('build', 'Build system', True),
@@ -118,7 +119,8 @@ PREFIXES = [
     ('rest', 'RPC and other APIs', False),
     ('rpc', 'RPC and other APIs', True),
     ('scripted-diff', 'Refactoring', False),
-    ('script', 'Miscellaneous', False), # !!! this is unclear, 'script' could also be block/tx handling or even consensus
+    # !!! this is unclear, 'script' could also be block/tx handling or even consensus
+    ('script', 'Miscellaneous', False),
     ('scripts', 'Miscellaneous', False),
     ('shutdown', 'Miscellaneous', False),
     ('tests', 'Tests and QA', True),
@@ -134,39 +136,37 @@ PREFIXES = [
 
 # Per-repository information
 REPO_INFO = {
-    'bitcoin/bitcoin': {
+    'koyotecoin/koyotecoin': {
         'label_mapping': LABEL_MAPPING,
         'prefixes': PREFIXES,
         'default_category': UNCATEGORIZED,
         'ghmeta': GHMETA,
-    },
-    # For now, GUI repository pulls are automatically categorized into the GUI category.
-    'bitcoin-core/gui': {
-        'label_mapping': (),
-        'prefixes': [],
-        'default_category': 'GUI',
-        'ghmeta': None,
-    },
+    }
 }
 
 # == Utilities ==
 
+
 def remove_last_if_empty(l):
     '''Remove empty last member of list'''
-    if l[-1]==b'' or l[-1]=='':
+    if l[-1] == b'' or l[-1] == '':
         return l[0:-1]
     else:
         return l
 
+
 # Valid chars in github names
 VALIDNAMECHARS = '[0-9a-zA-Z\-_]'
 # For parsing owner/repo#id
-FQID_RE = re.compile('^(' + VALIDNAMECHARS + '+)/(' + VALIDNAMECHARS + '+)#([0-9]+)$')
+FQID_RE = re.compile('^(' + VALIDNAMECHARS + '+)/(' +
+                     VALIDNAMECHARS + '+)#([0-9]+)$')
 # For parsing non-qualified #id
 PR_RE = re.compile('^#?([0-9]+)$')
 
+
 class FQId:
     '''Fully qualified PR id.'''
+
     def __init__(self, owner: str, repo: str, pr: int):
         self.owner = owner
         self.repo = repo
@@ -203,22 +203,33 @@ class FQId:
             return cls(owner, repo, int(m.group(1)))
         raise ValueError(f'Cannot parse {pull} as PR specification.')
 
+
 def tests():
     '''Quick internal sanity tests.'''
-    assert(FQId.parse('bitcoin/bitcoin#1234', 'bitcoin/bitcoin') == FQId('bitcoin', 'bitcoin', 1234))
-    assert(FQId.parse('bitcoin-core/gui#1235', 'bitcoin/bitcoin') == FQId('bitcoin-core', 'gui', 1235))
-    assert(FQId.parse('#1236', 'bitcoin/bitcoin') == FQId('bitcoin', 'bitcoin', 1236))
-    assert(FQId.parse('1237', 'bitcoin/bitcoin') == FQId('bitcoin', 'bitcoin', 1237))
-    assert(str(FQId('bitcoin', 'bitcoin', 1239)) == 'bitcoin/bitcoin#1239')
-    assert(FQId('bitcoin', 'bitcoin', 1239) < FQId('bitcoin', 'bitcoin', 1240))
-    assert(not (FQId('bitcoin', 'bitcoin', 1240) < FQId('bitcoin', 'bitcoin', 1239)))
-    assert(FQId('bitcoin', 'bitcoin', 1240) < FQId('bitcoin-core', 'gui', 1239))
-    assert(not (FQId('bitcoin-core', 'gui', 1239) < FQId('bitcoin', 'bitcoin', 1240)))
+    assert (FQId.parse('koyotecoin/koyotecoin#1234',
+            'koyotecoin/koyotecoin') == FQId('koyotecoin', 'koyotecoin', 1234))
+    assert (FQId.parse('koyotecoin/koyotecoin#1235', 'koyotecoin/koyotecoin')
+            == FQId('koyotecoin', 'koyotecoin', 1235))
+    assert (FQId.parse('#1236', 'koyotecoin/koyotecoin')
+            == FQId('koyotecoin', 'koyotecoin', 1236))
+    assert (FQId.parse('1237', 'koyotecoin/koyotecoin')
+            == FQId('koyotecoin', 'koyotecoin', 1237))
+    assert (str(FQId('koyotecoin', 'koyotecoin', 1239))
+            == 'koyotecoin/koyotecoin#1239')
+    assert (FQId('koyotecoin', 'koyotecoin', 1239) <
+            FQId('koyotecoin', 'koyotecoin', 1240))
+    assert (not (FQId('koyotecoin', 'koyotecoin', 1240)
+            < FQId('koyotecoin', 'koyotecoin', 1239)))
+    assert (FQId('koyotecoin', 'koyotecoin', 1240)
+            < FQId('koyotecoin', 'koyotecoin', 1239))
+    assert (not (FQId('koyotecoin', 'koyotecoin', 1239)
+            < FQId('koyotecoin', 'koyotecoin', 1240)))
+
 
 # == Main program ==
 tests()
-ref_from = sys.argv[1] # 'v0.10.0rc1'
-ref_to = sys.argv[2] # 'master'
+ref_from = sys.argv[1]  # 'v0.10.0rc1'
+ref_to = sys.argv[2]  # 'master'
 
 # read exclude file
 exclude_pulls = set()
@@ -228,7 +239,8 @@ if len(sys.argv) >= 4:
     try:
         with open(exclude_file, 'r') as f:
             d = json.load(f)
-            exclude_pulls = set(FQId.parse(str(p['id']), DEFAULT_REPO) for p in d['pulls'])
+            exclude_pulls = set(FQId.parse(
+                str(p['id']), DEFAULT_REPO) for p in d['pulls'])
         print(f'Excluding {", ".join(str(p) for p in exclude_pulls)}')
         print()
     except IOError as e:
@@ -236,7 +248,8 @@ if len(sys.argv) >= 4:
         exit(1)
 
 # set of all commits
-commits = subprocess.check_output([GIT, 'rev-list', '--reverse', '--topo-order', ref_from+'..'+ref_to])
+commits = subprocess.check_output(
+    [GIT, 'rev-list', '--reverse', '--topo-order', ref_from+'..'+ref_to])
 commits = commits.decode()
 commits = remove_last_if_empty(commits.splitlines())
 commits_list = commits
@@ -247,19 +260,22 @@ commit_data = {}
 
 # collect data
 for commit in commits:
-    info = subprocess.check_output([GIT, 'show', '-s', '--format=%B%x00%P', commit])
+    info = subprocess.check_output(
+        [GIT, 'show', '-s', '--format=%B%x00%P', commit])
     info = info.decode()
     (message, parents) = info.split('\0')
     title = message.rstrip().splitlines()[0]
     parents = parents.rstrip().split(' ')
     commit_data[commit] = CommitData(commit, message, title, parents)
 
+
 class CommitMetaData:
     pull = None
     rebased_from = None
 
     def __repr__(self):
-        return 'CommitMetadata(pull=%s,rebased_from=%s)' % (self.pull,self.rebased_from)
+        return 'CommitMetadata(pull=%s,rebased_from=%s)' % (self.pull, self.rebased_from)
+
 
 def parse_commit_message(msg):
     '''
@@ -269,7 +285,8 @@ def parse_commit_message(msg):
     for line in msg.splitlines():
         if line.startswith('Github-Pull:'):
             param = line[12:].strip()
-            if param.startswith('#'): # compensate for incorrect #bitcoin-core/gui#148
+            # compensate for incorrect #koyotecoin/koyotecoin#148
+            if param.startswith('#'):
                 param = param[1:]
             retval.pull = FQId.parse(param, DEFAULT_REPO)
         if line.startswith('Rebased-From:'):
@@ -279,6 +296,7 @@ def parse_commit_message(msg):
     else:
         return None
 
+
 # traverse merge commits
 pulls = {}
 PullData = namedtuple('PullData', ['id', 'merge', 'commits', 'index'])
@@ -286,14 +304,15 @@ orphans = set(commits)
 MERGE_RE = re.compile('Merge (.*?):')
 for c in commit_data.values():
     # is merge commit
-    if len(c.parents)>1:
-        assert(len(c.parents)==2)
+    if len(c.parents) > 1:
+        assert (len(c.parents) == 2)
         match = MERGE_RE.match(c.title)
-        if match: # merges a pull request
+        if match:  # merges a pull request
             if c.sha in orphans:
                 orphans.remove(c.sha)
             #print('removing ', c.sha)
-            sub_commits = subprocess.check_output([GIT, 'rev-list', c.parents[0]+'..'+c.parents[1]])
+            sub_commits = subprocess.check_output(
+                [GIT, 'rev-list', c.parents[0]+'..'+c.parents[1]])
             sub_commits = sub_commits.decode()
             sub_commits = set(sub_commits.rstrip().splitlines())
             pull = FQId.parse(match.group(1), DEFAULT_REPO)
@@ -322,10 +341,12 @@ for c in commit_data.values():
 
                     if not sub_pulls and 'backport' in c.title.lower():
                         # just information for manual checking
-                        print(f'{pull}: Merge PR title {repr(c.title)} contains \'backport\' but there are no sub-pulls')
+                        print(
+                            f'{pull}: Merge PR title {repr(c.title)} contains \'backport\' but there are no sub-pulls')
 
                     for (sub_pull, sub_pull_commits) in sub_pulls.items():
-                        pulls[sub_pull] = PullData(sub_pull, sub_pull_commits[0], sub_pull_commits, index)
+                        pulls[sub_pull] = PullData(
+                            sub_pull, sub_pull_commits[0], sub_pull_commits, index)
         else:
             print(f'{c.sha}: Merge commit does not merge a PR: {c.title}')
 
@@ -334,15 +355,17 @@ for o in set(orphans):
     c = commit_data[o]
     md = parse_commit_message(commit_data[o].message)
     if md:
-        pulls[md.pull] = PullData(md.pull, c.sha, [], commits_list.index(c.sha))
+        pulls[md.pull] = PullData(
+            md.pull, c.sha, [], commits_list.index(c.sha))
         orphans.remove(o)
 
 # Sort by index in commits list
 # This results in approximately chronological order
 pulls_order = list(pulls.values())
-pulls_order.sort(key=lambda p:p.index)
+pulls_order.sort(key=lambda p: p.index)
 pulls_order = [p.id for p in pulls_order]
 # pulls_order = sorted(pulls.keys())
+
 
 def guess_category_from_labels(repo_info, labels):
     '''
@@ -354,6 +377,7 @@ def guess_category_from_labels(repo_info, labels):
             if l in label_list:
                 return category
     return repo_info['default_category']
+
 
 def get_category(repo_info, labels, message):
     '''
@@ -368,10 +392,11 @@ def get_category(repo_info, labels, message):
             if message.lower().startswith(variant):
                 category = p_category
                 message = message[len(variant):].lstrip()
-                if not do_strip: # if strip is not requested, re-add prefix in sanitized way
+                if not do_strip:  # if strip is not requested, re-add prefix in sanitized way
                     message = prefix + ': ' + message.capitalize()
 
     return (category, message)
+
 
 pull_meta = {}
 pull_labels = {}
@@ -381,7 +406,7 @@ for pull in pulls_order:
 
     # Find github metadata for PR, if available
     data0 = None
-    data1 = {'title': '{Not found}', 'user': {'login':'unknown'}}
+    data1 = {'title': '{Not found}', 'user': {'login': 'unknown'}}
     if repo_info['ghmeta'] is not None:
         filename = f'{repo_info["ghmeta"]}/issues/{pull.pr//100}xx/{pull.pr}.json'
         try:
@@ -405,7 +430,8 @@ for pull in pulls_order:
         labels = ['Missing']
 
     # nightmarish UTF tweaking to fix broken output of export script
-    message = message.encode('ISO-8859-1', errors='replace').decode(errors='replace')
+    message = message.encode(
+        'ISO-8859-1', errors='replace').decode(errors='replace')
 
     # consistent ellipsis
     message = message.replace('...', '…')
@@ -418,10 +444,10 @@ for pull in pulls_order:
     data1['title'] = message
 
     per_category[category].append((pull, message, author))
-    pull_labels[pull] = labels 
+    pull_labels[pull] = labels
     pull_meta[pull] = data1
-    
-for _,category in LABEL_MAPPING:
+
+for _, category in LABEL_MAPPING:
     if not per_category[category]:
         continue
     print('### %s' % category)
@@ -449,10 +475,10 @@ pulls_d = []
 for pull in sorted(pulls.keys()):
     pd = pulls[pull]
     pulls_d.append(
-            {'id': str(pd.id),
-            'merge': pd.merge,
-            'commits': list(pd.commits),
-            'meta': pull_meta[pd.id]})
+        {'id': str(pd.id),
+         'merge': pd.merge,
+         'commits': list(pd.commits),
+         'meta': pull_meta[pd.id]})
 
 data_out = {
     'commits': commits_d,
@@ -460,7 +486,6 @@ data_out = {
     'orphans': list(orphans),
 }
 
-with open('pulls.json','w') as f:
+with open('pulls.json', 'w') as f:
     json.dump(data_out, f, sort_keys=True,
-                           indent=4, separators=(',', ': '))
-
+              indent=4, separators=(',', ': '))

@@ -9,7 +9,7 @@ index 63e1bf67e2..358dd663f8 100644
 -    benchmark::BenchRunner PASTE2(bench_, PASTE2(__LINE__, n))(STRINGIZE(n), n, priority_level);
 +    benchmark::BenchRunner PASTE2(bench_, PASTE2(0, n))(STRINGIZE(n), n, priority_level);
  
- #endif // BITCOIN_BENCH_BENCH_H
+ #endif // KOYOTECOIN_BENCH_BENCH_H
 diff --git a/src/clientversion.cpp b/src/clientversion.cpp
 index 192e9c52bc..e257059624 100644
 --- a/src/clientversion.cpp
@@ -32,7 +32,7 @@ index 92615b582a..611894be19 100644
  // Example(s): We use assert(...) extensively with the assumption of it never
  //             being a noop at runtime.
 -#if defined(NDEBUG)
--# error "Bitcoin cannot be compiled without assertions."
+-# error "Koyotecoin cannot be compiled without assertions."
 -#endif
  
  // Assumption: We assume a C++17 (ISO/IEC 14882:2017) compiler (minimum requirement).
@@ -172,4 +172,4 @@ index b6c03bed2a..b4a1380061 100644
 -        "Unreachable code reached (non-fatal)", __FILE__, __LINE__, __func__)
 +        "Unreachable code reached (non-fatal)", __FILE__, 0, __func__)
  
- #endif // BITCOIN_UTIL_CHECK_H
+ #endif // KOYOTECOIN_UTIL_CHECK_H

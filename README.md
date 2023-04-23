@@ -1,7 +1,6 @@
-External repository for Bitcoin Core related maintenance tools.
+External repository for Koyotecoin Core related maintenance tools.
 
-github-merge
-------------
+## github-merge
 
 A small script to automate merging pull-requests securely and sign them with GPG.
 
@@ -16,18 +15,19 @@ For example, if the "to" repo is identical to the "from" repo:
 Otherwise, for a differing "from" repo:
 
 ```bash
-./github-merge.py --repo-from=bitcoin-core/gui 1234
+./github-merge.py --repo-from=koyotecoin/koyotecoin 1234
 ```
 
 will fetch the pull request from another monotree repository. Be sure to also set `githubmerge.pushmirrors` (see below).
 
 What it does:
-* Fetch master and the pull request.
-* Locally construct a merge commit.
-* Show the diff that merge results in.
-* Ask you to verify the resulting source tree (so you can do a make check or whatever).
-* Ask you whether to GPG sign the merge commit.
-* Ask you whether to push the result upstream.
+
+- Fetch master and the pull request.
+- Locally construct a merge commit.
+- Show the diff that merge results in.
+- Ask you to verify the resulting source tree (so you can do a make check or whatever).
+- Ask you whether to GPG sign the merge commit.
+- Ask you whether to push the result upstream.
 
 This means that there are no potential race conditions (where a
 pull request gets updated while you're reviewing it, but before you click
@@ -36,10 +36,10 @@ couldn't mess with the sources.
 
 ### Setup
 
-Configuring the github-merge tool for the bitcoin repository is done in the following way:
+Configuring the github-merge tool for the koyotecoin repository is done in the following way:
 
-    git config githubmerge.repository bitcoin/bitcoin
-    git config githubmerge.pushmirrors "git@github.com:bitcoin-core/gui.git,git@github.com:YourPrivateMirror/bitcoin-core.git"
+    git config githubmerge.repository koyotecoin/koyotecoin
+    git config githubmerge.pushmirrors "git@github.com:koyotecoin/koyotecoin.git,git@github.com:YourPrivateMirror/koyotecoin.git"
     git config githubmerge.testcmd "make -j4 check" (adapt to whatever you want to use for testing)
     git config --global user.signingkey mykeyid
 
@@ -72,8 +72,7 @@ client via `pip3 install opentimestamps-client`. Then, download the gpg wrapper
 [the ots git integration documentation](https://github.com/opentimestamps/opentimestamps-client/blob/master/doc/git-integration.md#usage)
 for further details.
 
-update-translations
--------------------
+## update-translations
 
 Run this script from the root of a repository to update all translations from Transifex.
 It will do the following automatically:
@@ -85,69 +84,67 @@ It will do the following automatically:
 To be able to pull translation files from the Transifex website, it needs
 the [Transifex CLI](https://github.com/transifex/cli).
 
-clang-format
-------------
+## clang-format
 
-A script to format cpp source code according to the .clang-format file in the bitcoin repo.
+A script to format cpp source code according to the .clang-format file in the koyotecoin repo.
 This should only be applied to new files or files which are currently not actively developed on.
 Also, git subtrees are not subject to formatting.
 
 Note: The script is currently untested and unmaintained, but kept for archival reasons, in
 case it is planned to be used some day.
 
-build-for-compare
---------------------
+## build-for-compare
 
 Build for binary comparison.
 
 See `build-for-compare.py --help` for more information.
 
-Builds from current directory, which is assumed to be a git clone of the bitcoin repository.
+Builds from current directory, which is assumed to be a git clone of the koyotecoin repository.
 
 **DO NOT RUN this with the nocopy=1 flag set on working tree if you have any local additions, it will nuke all
 non-repository files, multiple times over. By leaving nocopy off (default) the git tree is copied to a temporary
 directory and all operations are performed there.**
 
 Example:
+
 ```bash
-git clone https://github.com/bitcoin/bitcoin.git bitcoin-compare
-cd bitcoin-compare
-../bitcoin-maintainer-tools/build-for-compare.py 4731cab 2f71490
-sha256sum /tmp/compare/bitcoind.*.stripped
+git clone https://github.com/koyotecoin/koyotecoin.git koyotecoin-compare
+cd koyotecoin-compare
+../koyotecoin-maintainer-tools/build-for-compare.py 4731cab 2f71490
+sha256sum /tmp/compare/koyotecoind.*.stripped
 git diff -W --word-diff /tmp/compare/4731cab /tmp/compare/2f71490
 ```
 
-backport
---------
+## backport
 
 Script to backport pull requests in order of merge, to minimize number of conflicts.
 Pull ids are listed in `to_backport.txt` or given on the command line, and they must be prefixed
 with the repository name, e.g.:
 
 ```bash
-../bitcoin-maintainer-tools/backport.py bitcoin/bitcoin#21907 bitcoin-core/gui#277 bitcoin-core/gui#365
+../koyotecoin-maintainer-tools/backport.py koyotecoin/koyotecoin#21907 koyotecoin/koyotecoin#277 koyotecoin/koyotecoin#365
 
 ```
 
 Requires `pip3 install gitpython` or similar.
 
-unittest-statistics
---------------------------
+## unittest-statistics
 
 `unittest-statistics.py` can be used to print a table of the slowest 20 unit tests.
 
 Usage:
+
 ```bash
-unittest-statistics.py </path/to/test_bitcoin> [<subtest>]
+unittest-statistics.py </path/to/test_koyotecoin> [<subtest>]
 ```
 
 For example:
+
 ```bash
-unittest-statistics.py src/test/test_bitcoin wallet_tests
+unittest-statistics.py src/test/test_koyotecoin wallet_tests
 ```
 
-treehash512
---------------
+## treehash512
 
 This script will show the SHA512 tree has for a certain commit, or HEAD
 by default.
@@ -161,8 +158,7 @@ treehash512.py [<commithash>]
 This should match the Tree-SHA512 commit metadata field added by
 github-merge.
 
-signoff
-----------
+## signoff
 
 This is an utility to manually add a treehash to the HEAD commit and then
 gpg-sign it. This is useful when there is the need to manually add a commit.
@@ -172,6 +168,7 @@ Usage:
 ```bash
 signoff.py
 ```
+
 (no command line arguments)
 
 When there is already a treehash on the HEAD commit, it is compared against
@@ -182,10 +179,9 @@ the computed hash to the commit message.
 After making sure the treehash is correct it verifies whether the commit is
 signed. If so it just displays the signature, if not, it is signed.
 
-subtree updates
----------------
+## subtree updates
 
-Bitcoin Core comes with several subtrees (c.f. https://github.com/bitcoin/bitcoin/tree/master/test/lint#git-subtree-checksh)
+Koyotecoin Core comes with several subtrees (c.f. https://github.com/koyotecoin/koyotecoin/tree/master/test/lint#git-subtree-checksh)
 To update the subtree, make sure to fetch the remote of the subtree.
 Then a simple call should pull in and squash the changes:
 
@@ -195,10 +191,9 @@ git subtree pull --prefix src/${prefix} ${remote_repo} ${ref} --squash
 
 For setting up a subtree, refer to `git help subtree`.
 
-check-dnsseeds
----------------
+## check-dnsseeds
 
-Sanity-check the DNS seeds used by Bitcoin Core.
+Sanity-check the DNS seeds used by Koyotecoin Core.
 
 Usage:
 
@@ -210,33 +205,31 @@ Example output:
 
 ```bash
 * Mainnet
-OK   seed.bitcoin.sipa.be (40 results)
+OK   seed.koyotecoin.sipa.be (40 results)
 OK   dnsseed.bluematt.me (33 results)
-FAIL dnsseed.bitcoin.dashjr.org
-OK   seed.bitcoinstats.com (50 results)
-OK   seed.bitcoin.jonasschnelli.ch (38 results)
+FAIL dnsseed.koyotecoin.dashjr.org
+OK   seed.koyotecoinstats.com (50 results)
+OK   seed.koyotecoin.jonasschnelli.ch (38 results)
 OK   seed.btc.petertodd.org (23 results)
-OK   seed.bitcoin.sprovoost.nl (35 results)
+OK   seed.koyotecoin.sprovoost.nl (35 results)
 OK   dnsseed.emzy.de (41 results)
 
 * Testnet
-OK   testnet-seed.bitcoin.jonasschnelli.ch (36 results)
+OK   testnet-seed.koyotecoin.jonasschnelli.ch (36 results)
 OK   seed.tbtc.petertodd.org (38 results)
 OK   testnet-seed.bluematt.me (5 results)
 ```
 
-delete non-reduced fuzz inputs
-------------------------------
+## delete non-reduced fuzz inputs
 
 Refer to the documentation inside the script.
 
-fastcopy-chaindata
--------------------
+## fastcopy-chaindata
 
-Fast local copy of Bitcoin Core blockchain state.
+Fast local copy of Koyotecoin Core blockchain state.
 
 ```bash
-fastcopy-chaindata.py ~/.bitcoin /path/to/temp/datadir
+fastcopy-chaindata.py ~/.koyotecoin /path/to/temp/datadir
 ```
 
 This utility hardlinks all but the last block data file (rev and blk),
@@ -249,15 +242,14 @@ are read-only once they are written.
 Warning: Hardlinking only works within a filesystem, and may not work for all
 filesystems.
 
-list-pulls
-----------
+## list-pulls
 
 Script to parse git commit list, extract github issues to create a changelog in
 text and json format.
 
 Run this in the root directory of the repository.
 
-This requires an up-to-date checkout of https://github.com/zw/bitcoin-gh-meta.git
+This requires an up-to-date checkout of https://github.com/zw/koyotecoin-gh-meta.git
 in the parent directory, or environment variable `GHMETA`.
 
 It takes a range of commits and a .json file of PRs to exclude, for
@@ -272,15 +264,13 @@ The output of this script is a first draft based on rough heuristics, and
 likely needs to be extensively manually edited before ending up in the release
 notes.
 
-make-tag
---------
+## make-tag
 
 Make a new release tag, performing a few checks.
 
 Usage: `make-tag.py <tag>`.
 
-guix-verify
------------
+## guix-verify
 
 A script to verify guix deterministic build signatures for a release in one
 glance. It will print a matrix of signer versus build package ("noncodesigned"
@@ -295,19 +285,20 @@ pip3 install --user gpg
 
 (or install the distribution package, in Debian/Ubuntu this is `python3-gpg`).
 
-Example usage: `./guix-verify.py -r 24.0 -d ../guix.sigs -k ../bitcoin/contrib/builder-keys/keys.txt`
+Example usage: `./guix-verify.py -r 24.0 -d ../guix.sigs -k ../koyotecoin/contrib/builder-keys/keys.txt`
 
 Where
 
 - `-r 24.0` specifies the release to verify signatures for.
-- `-d ../gitian.sigs` specifies the directory where the repository with signatures, [gitian.sigs](https://github.com/bitcoin-core/gitian.sigs/) is checked out.
-- `../bitcoin/contrib/builder-keys/keys.txt` is the path to `keys.txt` file inside the main repository that specifies the valid keys and what signers they belong to.
+- `-d ../gitian.sigs` specifies the directory where the repository with signatures, [gitian.sigs](https://github.com/koyotecoin/gitian.sigs/) is checked out.
+- `../koyotecoin/contrib/builder-keys/keys.txt` is the path to `keys.txt` file inside the main repository that specifies the valid keys and what signers they belong to.
 
 Example output:
+
 ```
 Signer        noncodesigned       all
 0xb10c           No Key            -
-achow101           OK             OK       
+achow101           OK             OK
 benthecarman     No Key            -
 ...
 
@@ -326,8 +317,7 @@ The following statuses can be shown:
 - `Bad` Known key but invalid PGP signature.
 - `Mismatch` Correct PGP signature but mismatching binaries.
 
-ghwatch
--------
+## ghwatch
 
 This is a script to watch your github notifications in the terminal. It will show a table that is refreshed every 10 minutes (configurable). It can be exited by pressing <kbd>ESC</kbd> or <kbd>Ctrl-C</kbd>.
 
@@ -351,10 +341,11 @@ Then, edit the configuration file. Only thing that is necessary to change is `gh
 
 Depending on your browser preference you might want to change `browser`, this is the command that will be invoked when clicking on an issue number. It defaults to `null` which indicates to use the system web browser.
 
-If you want to see PR status (and other issue details like labels), point `meta` for the `bitcoin/bitcoin` repository to an up-to-date checkout of [bitcoin-gh-meta](https://github.com/zw/bitcoin-gh-meta).
+If you want to see PR status (and other issue details like labels), point `meta` for the `koyotecoin/koyotecoin` repository to an up-to-date checkout of [bitcoin-gh-meta](https://github.com/zw/bitcoin-gh-meta).
+
 ```
     "meta": {
-        "bitcoin/bitcoin": "/path/to/bitcoin-gh-meta"
+        "koyotecoin/koyotecoin": "/path/to/koyotecoin-gh-meta"
     },
 ```
 

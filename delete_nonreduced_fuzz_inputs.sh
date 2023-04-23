@@ -13,7 +13,7 @@ export FUZZ_INPUTS_DIR="fuzz_seed_corpus"
 
 set -e
 
-echo "Installing Bitcoin Core build deps"
+echo "Installing Koyotecoin Core build deps"
 export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y \
@@ -22,7 +22,7 @@ apt install -y \
   libsqlite3-dev libevent-dev libboost-dev \
   clang llvm
 
-git clone https://github.com/bitcoin-core/qa-assets.git
+git clone https://github.com/koyotecoin/qa-assets.git
 (
   cd qa-assets
   mv ./"${FUZZ_INPUTS_DIR}" ../all_inputs
@@ -31,9 +31,9 @@ git clone https://github.com/bitcoin-core/qa-assets.git
   git commit -a -m "Delete fuzz inputs"
 )
 
-git clone https://github.com/bitcoin/bitcoin.git
+git clone https://github.com/koyotecoin/koyotecoin.git
 (
-  cd bitcoin
+  cd koyotecoin
 
   ./autogen.sh
 
